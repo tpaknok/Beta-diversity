@@ -6,6 +6,7 @@ library(vegan)
 library(glmmTMB)
 library(ggeffects)
 source("site_dist.R")
+source("rake.R")
 random_sample <- seq(6,20,2)
 n_h1 <- 20
 n_h2 <- 40
@@ -182,7 +183,7 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
   
 ###
   
-  site_initial <- c(20,20,20)
+  site_initial <- c(20,20,10)
   sp_richness <- 5
   dissim = "jaccard"
   
@@ -258,13 +259,26 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
   ggsave("p4.tiff",dpi=800,compression="lzw")
 ###
   
-  site_initial <- c(20,20,10)
+  site_initial <- c(20,20,100)
   sp_richness <- 5
   dissim = "jaccard"
-  set.seed(999)
+  set.seed(100)
   gamma <- 40
+  link <- "log"
+  generalist <- 0
   
   result_df <- list()
+  
+  env_data <- c(rep(1,site_initial[[1]]),rep(2,site_initial[[2]]),rep(3,site_initial[[3]]))
+  
+  weighted.analysis = F
+  
+  if (weighted.analysis == T) {
+  w <- rake(as.data.frame(env_data))
+  } else {
+    w <- rep(1,sum(site_initial))
+  }
+  
   for (i in 1:100) {
     message("i = ",i)
     site_mat_list <- list()
@@ -273,47 +287,58 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
     
     for (j in 1:nrow(mat)) {
       if (j <= site_initial[[1]]) {
-        mat[j,sample(1:(gamma/2),sp_richness)] <- 1
+        mat[j,sample(1:((gamma/2+generalist)),sp_richness)] <- 1
       }  else if (j > sum(site_initial)-site_initial[[3]]){
-        mat[j,sample((gamma/2+1):gamma,sp_richness)] <- 1
+        mat[j,sample((gamma/2+1-generalist):gamma,sp_richness)] <- 1
       } else {
         mat[j,sample(1:gamma,sp_richness)] <- 1
       }
     }
     
-    env_data <- c(rep(1,site_initial[[1]]),rep(2,site_initial[[2]]),rep(3,site_initial[[3]]))
-    
     avg_dis <- as.matrix(vegdist(mat,dissim))
     avg_dis[col(avg_dis)==row(avg_dis)] <- NA
-    avg_dis <- colMeans(avg_dis,na.rm=T)
+    avg_dis <- apply(avg_dis,2,function(x) weighted.mean(x,w,na.rm=T))
+    #avg_dis <- 1-avg_dis
     
     env_dist <- as.matrix(gower(as.matrix(env_data)))
     env_dist[col(env_dist)==row(env_dist)] <- NA
-    env_dist <- colMeans(env_dist,na.rm=T)
     
-    plot(env_data,avg_dis)
-    m_balanced_ad <- glmmTMB(avg_dis~env_data+I(env_data^2),family=beta_family())
+    #m_balanced_ad <- glmmTMB(avg_dis~env_data+I(env_data^2),family=beta_family(),weights=env_w)
+    #m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),family=binomial(link=link))
+    #m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link))
+    m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),family=binomial)
+    
     summary(m_balanced_ad)
-    predict_observed <- predict(m_balanced_ad,newdata = data.frame(env_data=c(1,2,3)),type="response")
+    predict_observed <- unique(predict(m_balanced_ad,type="response"))
     
-    reg_df <- site_dist(mat,env_data,dissim,"gower",min(apply(gower(as.matrix(env_data)),2,max)),quadratic.term=F,trans = T)
-    m_env_controlled_ad_max <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family())
+    reg_df <- site_dist(mat,env_data,dissim,"gower",min(apply(gower(as.matrix(env_data)),2,max)),quadratic.term=F,trans = F,weight=w)
+    #m_env_controlled_ad_max <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
+    #m_env_controlled_ad_max <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
+    m_env_controlled_ad_max <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    
     summary(m_env_controlled_ad_max)
-    plot(reg_df$env,reg_df$avg_dis)
-    predict_max <- predict(m_env_controlled_ad_max,newdata = data.frame(env=c(1,2,3)),type="response")
+    #plot(reg_df$env,reg_df$avg_dis)
+    predict_max <- unique(predict(m_env_controlled_ad_max,type="response"))
     
-    reg_df <- site_dist(mat,env_data,dissim,"gower",0,quadratic.term=F,trans = T)
-    m_env_controlled_ad_0 <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family())
+    reg_df <- site_dist(mat,env_data,dissim,"gower",0,quadratic.term=F,trans = F,weight=w)
+    #m_env_controlled_ad_0 <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
+    #m_env_controlled_ad_0 <-  glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
+    m_env_controlled_ad_0 <-  glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    
     summary(m_env_controlled_ad_0)
-    plot(reg_df$env,reg_df$avg_dis)
-    predict_0 <- predict(m_env_controlled_ad_0,newdata = data.frame(env=c(1,2,3)),type="response")
+    #plot(reg_df$env,reg_df$avg_dis)
+    predict_0 <- unique(predict(m_env_controlled_ad_0,type="response"))
     
-    reg_df <- site_dist(mat,env_data,dissim,"gower",apply(gower(as.matrix(env_data)),2,max),quadratic.term=F,trans = T)
+    reg_df <- site_dist(mat,env_data,dissim,"gower",apply(gower(as.matrix(env_data)),2,max),quadratic.term=F,trans = F,weight=w)
+    reg_df$avg_dis <- ifelse(reg_df$avg_dis > 1,1,ifelse(reg_df$avg_dis <0,0,reg_df$avg_dis))
     #reg_df <- site_dist(mat,env_data,dissim,"gower",env_dist,quadratic.term=F,trans = T)
-    m_uncontrolled_ED <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family())
+    #m_uncontrolled_ED <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
+    #m_uncontrolled_ED <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
+    m_uncontrolled_ED <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    
     summary(m_uncontrolled_ED)
-    plot(reg_df$env,reg_df$avg_dis)
-    predict_uncontrolled_ED <- predict(m_uncontrolled_ED ,newdata = data.frame(env=c(1,2,3)),type="response")
+    #plot(reg_df$env,reg_df$avg_dis)
+    predict_uncontrolled_ED <- unique(predict(m_uncontrolled_ED,type="response"))
     
     result_df[[i]] <- as.data.frame(rbind(cbind(predict_observed,c(1,2,3),"Observed",i),
                                           cbind(predict_max,c(1,2,3),"Max",i),
@@ -325,13 +350,14 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
   colnames(result_df_ordinal) <- c("predicted_beta_site","Habitat","ED_cond","i")
   result_df_ordinal$predicted_beta_site <- as.numeric(result_df_ordinal$predicted_beta_site)
   result_df_ordinal$id <- interaction(result_df_ordinal$Habitat,result_df_ordinal$ED_cond)
+  #result_df_ordinal$predicted_beta_site <- 1-result_df_ordinal$predicted_beta_site
   
   library(ggplot2)
-  p52 <- ggplot(result_df_ordinal)+
+  p5_unbalanced<- ggplot(result_df_ordinal)+
     geom_boxplot(aes(y=predicted_beta_site,x=ED_cond,group=id,fill=Habitat),position = position_dodge(preserve = "single"))+
     ylab(~ paste("Predicted ",beta[Site]))+
     xlab("ED value")+
-    ylim(0.80,1)+
+    ylim(0.75,1)+
     scale_fill_discrete(labels= c("1" = expression("1 ("~gamma~"=20 )"),
                                   "2" = expression("2 ("~gamma~"=40 )"),
                                   "3" = expression("3 ("~gamma~"=20 )")))+
@@ -339,11 +365,40 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
     theme_classic()+
     theme(legend.position="bottom")
   
-  plot(p52)
+  plot(p5_unbalanced)
   
-  plot(p5)
+  test <- subset(result_df_ordinal,ED_cond == "Max")
+  t.test(test[test$Habitat == 1,1]-test[test$Habitat == 2,1])
+  boxplot(test[test$Habitat == 1,1]-test[test$Habitat == 3,1])
   
   library(ggpubr)
-  p_overall <- ggarrange(p5,p52)
-  ggsave("p5.tiff",dpi=800,compression="lzw")
+  p_overall <- ggarrange(p5_balanced,p5_unbalanced_unadjusted,p5_unbalanced_adjusted,
+                         common.legend = T,ncol=3,legend="bottom",
+                         labels= "AUTO")
+  plot(p_overall)
+  ggsave("p6.tiff",width=16,height=8,dpi=800,compression="lzw")
   
+###
+  
+data(dune.env)
+data(dune)
+
+obs_dist <- vegdist(dune,"jaccard")
+diag(obs_dist) <- NA
+
+for_sel_result_0 <- for_sel_result <-  NULL
+for (i in 1:ncol(dune.env)){
+  w_single <- rake(as.data.frame(dune.env[,i]),maxit=9999)
+  w_obs_dist <- apply(obs_dist,2,function(x) weighted.mean(x,w_single,na.rm=T))
+  m_uni <- glm(w_obs_dist~dune.env[,i],family=binomial)
+  for_sel_result <- rbind(for_sel_result,c(colnames(dune.env[i]),Anova(m_uni)$`Pr(>Chisq)`))
+  
+  reg_df_temp <- site_dist(dune,dune.env[,i],"jaccard","gower",0,quadratic.term=F,trans = F,weight=w_single)
+  reg_df_temp$avg_dis <-  ifelse(reg_df_temp$avg_dis>1,1,reg_df_temp$avg_dis)
+  m_uni_0 <- glm(avg_dis~env,family=binomial,data=reg_df_temp)
+  summary(m_uni_0)
+  for_sel_result_0 <- rbind(for_sel_result_0,c(colnames(dune.env[i]),Anova(m_uni_0)$`Pr(>Chisq)`))
+  
+}
+
+
