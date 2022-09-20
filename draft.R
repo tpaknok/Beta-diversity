@@ -258,18 +258,22 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
   
   ggsave("p4.tiff",dpi=800,compression="lzw")
 ###
-  
-  site_initial <- c(20,20,100)
-  sp_richness <- 5
+  library(betapart)
+  merged_df <- NULL
+  for (sample_size in c(20,100)) {
+  site_initial <- c(20,20,sample_size)
+  sp_richness <- 10
   dissim = "jaccard"
-  set.seed(100)
-  gamma <- 40
+  set.seed(999)
+  habitat_gamma <- c(20,30,20)
+  tl_gamma <- habitat_gamma[[1]]+habitat_gamma[[3]]
   link <- "log"
   generalist <- 0
   
   result_df <- list()
   
   env_data <- c(rep(1,site_initial[[1]]),rep(2,site_initial[[2]]),rep(3,site_initial[[3]]))
+  env_data <- ordered(env_data)
   
   weighted.analysis = F
   
@@ -283,87 +287,115 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
     message("i = ",i)
     site_mat_list <- list()
     
-    mat <- matrix(0,sum(site_initial),gamma)
+    mat <- matrix(0,sum(site_initial),tl_gamma)
     
     for (j in 1:nrow(mat)) {
       if (j <= site_initial[[1]]) {
-        mat[j,sample(1:((gamma/2+generalist)),sp_richness)] <- 1
+        mat[j,sample(1:habitat_gamma[[1]],sp_richness)] <- 1
       }  else if (j > sum(site_initial)-site_initial[[3]]){
-        mat[j,sample((gamma/2+1-generalist):gamma,sp_richness)] <- 1
+        mat[j,sample((tl_gamma/2+1):tl_gamma,sp_richness)] <- 1
       } else {
-        mat[j,sample(1:gamma,sp_richness)] <- 1
+        mat[j,sample(1:habitat_gamma[[2]],sp_richness)] <- 1
       }
     }
     
     avg_dis <- as.matrix(vegdist(mat,dissim))
-    avg_dis[col(avg_dis)==row(avg_dis)] <- NA
+    diag(avg_dis) <- NA
     avg_dis <- apply(avg_dis,2,function(x) weighted.mean(x,w,na.rm=T))
     #avg_dis <- 1-avg_dis
     
     env_dist <- as.matrix(gower(as.matrix(env_data)))
     env_dist[col(env_dist)==row(env_dist)] <- NA
     
+    numeric_env <- as.numeric(env_data)
     #m_balanced_ad <- glmmTMB(avg_dis~env_data+I(env_data^2),family=beta_family(),weights=env_w)
     #m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),family=binomial(link=link))
     #m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link))
-    m_balanced_ad <- glm(avg_dis~env_data+I(env_data^2),family=binomial)
+    m_balanced_ad <- lm(avg_dis~numeric_env+I(numeric_env^2))
     
     summary(m_balanced_ad)
     predict_observed <- unique(predict(m_balanced_ad,type="response"))
     
     reg_df <- site_dist(mat,env_data,dissim,"gower",min(apply(gower(as.matrix(env_data)),2,max)),quadratic.term=F,trans = F,weight=w)
+    
+    reg_df$env <- as.numeric(reg_df$env)
+    within_beta <- subset(reg_df,type=="Within")
+    m_within <- lm(avg_dis~env+I(env^2),data=within_beta)
+    summary(m_within)
+    predict_0 <- unique(predict(m_within))
+    
+    between_beta <- subset(reg_df,type=="Between")
+    m_between <- lm(avg_dis~env+I(env^2),data=between_beta)
+    summary(m_between)
+    predict_between <- unique(predict(m_between))
+    
+    total_beta <- subset(reg_df,type=="Total")
+    m_total<- lm(avg_dis~env+I(env^2),data=total_beta)
+    summary(m_total)
+    predict_total <- unique(predict(m_total))
+    
     #m_env_controlled_ad_max <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
     #m_env_controlled_ad_max <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
-    m_env_controlled_ad_max <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
-    
-    summary(m_env_controlled_ad_max)
+    #m_env_controlled_ad_max <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    #summary(m_env_controlled_ad_max)
     #plot(reg_df$env,reg_df$avg_dis)
-    predict_max <- unique(predict(m_env_controlled_ad_max,type="response"))
+    #predict_max <- unique(predict(m_env_controlled_ad_max,type="response"))
     
-    reg_df <- site_dist(mat,env_data,dissim,"gower",0,quadratic.term=F,trans = F,weight=w)
+    #reg_df <- site_dist(mat,env_data,dissim,"gower",0,quadratic.term=F,trans = F,weight=w)
     #m_env_controlled_ad_0 <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
     #m_env_controlled_ad_0 <-  glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
-    m_env_controlled_ad_0 <-  glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
-    
-    summary(m_env_controlled_ad_0)
+    #m_env_controlled_ad_0 <-  glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    #summary(m_env_controlled_ad_0)
     #plot(reg_df$env,reg_df$avg_dis)
-    predict_0 <- unique(predict(m_env_controlled_ad_0,type="response"))
+    #predict_0 <- unique(predict(m_env_controlled_ad_0,type="response"))
     
-    reg_df <- site_dist(mat,env_data,dissim,"gower",apply(gower(as.matrix(env_data)),2,max),quadratic.term=F,trans = F,weight=w)
-    reg_df$avg_dis <- ifelse(reg_df$avg_dis > 1,1,ifelse(reg_df$avg_dis <0,0,reg_df$avg_dis))
+    #reg_df <- site_dist(mat,env_data,dissim,"gower",apply(gower(as.matrix(env_data)),2,max),quadratic.term=F,trans = F,weight=w)
+    #reg_df$avg_dis <- ifelse(reg_df$avg_dis > 1,1,ifelse(reg_df$avg_dis <0,0,reg_df$avg_dis))
     #reg_df <- site_dist(mat,env_data,dissim,"gower",env_dist,quadratic.term=F,trans = T)
     #m_uncontrolled_ED <- glmmTMB(avg_dis~env+I(env^2),data=reg_df,family=beta_family(),weights=env_w)
     #m_uncontrolled_ED <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial(link),weights=w)
-    m_uncontrolled_ED <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
-    
-    summary(m_uncontrolled_ED)
+    #m_uncontrolled_ED <- glm(avg_dis~env_data+I(env_data^2),data=reg_df,family=binomial)
+    #summary(m_uncontrolled_ED)
     #plot(reg_df$env,reg_df$avg_dis)
-    predict_uncontrolled_ED <- unique(predict(m_uncontrolled_ED,type="response"))
+    #predict_uncontrolled_ED <- unique(predict(m_uncontrolled_ED,type="response"))
+    
+   # result_df[[i]] <- as.data.frame(rbind(cbind(predict_observed,c(1,2,3),"Observed",i),
+                                          #cbind(predict_max,c(1,2,3),"Max",i),
+                                          #cbind(predict_0,c(1,2,3),"0",i),
+                                          #cbind(predict_uncontrolled_ED,c(1,2,3),"Habitat_Max",i)))
+    Effort <- ifelse(length(unique(site_initial)) == 1, "Balanced","Unbalanced")
     
     result_df[[i]] <- as.data.frame(rbind(cbind(predict_observed,c(1,2,3),"Observed",i),
-                                          cbind(predict_max,c(1,2,3),"Max",i),
-                                          cbind(predict_0,c(1,2,3),"0",i),
-                                    cbind(predict_uncontrolled_ED,c(1,2,3),"Habitat_Max",i)))
+                                          cbind(predict_0,c(1,2,3),"Within",i),
+                                          cbind(predict_between,c(1,2,3),"Between",i),
+                                          cbind(predict_total,c(1,2,3),"Total",i)))
+    
+    
     }
   
   result_df_ordinal <- do.call(rbind,result_df)
   colnames(result_df_ordinal) <- c("predicted_beta_site","Habitat","ED_cond","i")
   result_df_ordinal$predicted_beta_site <- as.numeric(result_df_ordinal$predicted_beta_site)
   result_df_ordinal$id <- interaction(result_df_ordinal$Habitat,result_df_ordinal$ED_cond)
+  result_df_ordinal$type <- ifelse(length(unique(site_initial)) == 1, "Balanced","Unbalanced")
+  merged_df <- rbind(merged_df,result_df_ordinal)
+  }
   #result_df_ordinal$predicted_beta_site <- 1-result_df_ordinal$predicted_beta_site
   
+  merged_df$ED_cond <- factor(merged_df$ED_cond,levels=c("Observed","Total","Within","Between"))
+  merged_df_no_total <- subset(merged_df,ED_cond != "Total")
   library(ggplot2)
-  p5_unbalanced<- ggplot(result_df_ordinal)+
-    geom_boxplot(aes(y=predicted_beta_site,x=ED_cond,group=id,fill=Habitat),position = position_dodge(preserve = "single"))+
+  library(ggh4x)
+  p5_unbalanced<- ggplot(merged_df_no_total)+
+    geom_boxplot(aes(y=predicted_beta_site,x=Habitat,fill=Habitat))+
     ylab(~ paste("Predicted ",beta[Site]))+
-    xlab("ED value")+
-    ylim(0.75,1)+
-    scale_fill_discrete(labels= c("1" = expression("1 ("~gamma~"=20 )"),
-                                  "2" = expression("2 ("~gamma~"=40 )"),
-                                  "3" = expression("3 ("~gamma~"=20 )")))+
-    scale_x_discrete(labels= c(Max = 0.5))+
-    theme_classic()+
-    theme(legend.position="bottom")
+    xlab("Habitat")+
+    #ylim(0.75,1)+
+    scale_fill_discrete(labels= c("1" = expression("A ("~gamma~"=20 )"),
+                                  "2" = expression("B ("~gamma~"=30 )"),
+                                  "3" = expression("C ("~gamma~"=20 )")))+
+    theme(legend.position="bottom")+
+    facet_grid(ED_cond~type,scales="free")
   
   plot(p5_unbalanced)
   
@@ -376,7 +408,7 @@ ggsave("p1.tiff",dpi=800,width=16,height=8,compression="lzw")
                          common.legend = T,ncol=3,legend="bottom",
                          labels= "AUTO")
   plot(p_overall)
-  ggsave("p6.tiff",width=16,height=8,dpi=800,compression="lzw")
+  ggsave("p6.tiff",width=8,height=8,dpi=800,compression="lzw")
   
 ###
   
