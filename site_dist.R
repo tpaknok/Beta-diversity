@@ -1,4 +1,4 @@
-site_dist <- function(mat,env,dissim_mat,dissim_env,ref,quadratic.term=T,trans = T,link="log",weight=NULL) {
+site_dist <- function(mat,env,dissim_mat,dissim_env,ref,quadratic.term=T,trans = T,family="gaussian",splines=3,link="log",weight=NULL) {
   require(BAT)
   require(vegan)
   require(mgcv)
@@ -27,15 +27,21 @@ site_dist <- function(mat,env,dissim_mat,dissim_env,ref,quadratic.term=T,trans =
       min_num_env <- min(numeric_env)
       range_env <- rbind(min_num_env,max_num_env)
   
-      env_list[[env_var]]<- apply(range_env,2,function (x) seq(x[[1]],range_env[[2]],length.out=11))
+      env_list[[env_var]]<- apply(range_env,2,function (x) seq(x[[1]],range_env[[2]],length.out=101))
     } else {
         env_factor <- env[,env_var]
         env_list[[env_var]] <- unique(env_factor)
-    }
+        
+        if (is.ordered(env_list[[env_var]])) {
+          env_list[[env_var]] <- as.numeric(env_list[[env_var]])
+        }
+      }
     }
   
   env_space <- expand.grid(env_list)
-  env_space[,sapply(env_space,is.ordered)] <- c(apply(as.data.frame(env_space[,sapply(env_space,is.ordered)]),2,as.numeric))
+  #env_space[,sapply(env_space,is.ordered)] <- sapply(as.data.frame(env_space[,sapply(env_space,is.ordered)]),as.numeric)
+  #env_space <- as.data.frame(sapply(env_space, function(x) { attributes(x) <- NULL; x }))
+  env[,sapply(env,is.ordered)] <- sapply(as.data.frame(env[,sapply(env,is.ordered)]),as.numeric)
   
   #st.val <- c(0.005, -1e-05)
   for (k in 1:nrow(dis_matrix)){
@@ -67,9 +73,9 @@ site_dist <- function(mat,env,dissim_mat,dissim_env,ref,quadratic.term=T,trans =
     #env_diff <- as.data.frame(env_diff)
     #colnames(env_diff) <- paste0(colnames(env),"_diff")
 
-    pair_df <- data.frame(pair_dist,env=as.data.frame(env)[-k,])
-    
-    pair_df[,sapply(pair_df,is.ordered)] <- c(apply(as.data.frame(pair_df[,sapply(pair_df,is.ordered)]),2,as.numeric))
+    pair_df <- data.frame(pair_dist,env[-k,])
+    colnames(pair_df)[-1] <- colnames(env)
+    #pair_df[,sapply(pair_df,is.ordered)] <- sapply(as.data.frame(pair_df[,sapply(pair_df,is.ordered)]),as.numeric)
     #predict_between <- unique(pair_df[abs(pair_df$env_diff)==max(abs(env_diff)),env_var])
 
     #reg_df$scaled_dist <- c(scale(reg_df$pair_dist,center=min(reg_df[,1]),scale = max(reg_df[,1])-min(reg_df[,1])))
@@ -86,27 +92,42 @@ site_dist <- function(mat,env,dissim_mat,dissim_env,ref,quadratic.term=T,trans =
       #dis_controlled_m <-neuralnet(scaled_dist~scaled_env_dist,data=reg_df)
       #dis_controlled_m <- nls(pair_dist ~ NLS.expoDecay(env_dist, a, k),data = pair_df)
       #dis_controlled_m <- drm(pair_dist ~ env_dist,fct = DRC.expoDecay(),data=pair_df)
-      dis_controlled_m <- gam(pair_dist ~ s(env,k=3),data=pair_df)
+      env_name <- colnames(pair_df)[-1]
+      num_seq <- which(sapply(pair_df,is.numeric))[-1] - 1
+      
+      if (length(num_seq) > 0 ) { #if continuous var exists
+      env_name[num_seq] <- paste0("s(",env_name[num_seq])
+      env_name[num_seq] <- paste0(env_name[num_seq],",k =",splines,")")
+  }
+      env_name <- paste(env_name,collapse="+")
+      formula = as.formula(paste0("pair_dist~",env_name))
+      dis_controlled_m <- gam(formula,data=pair_df,family=family)
       summary(dis_controlled_m)
     #}
     #avg_dis[[k]] <- unique(predict(dis_controlled_m,newdata = data.frame(env_dist=rep(ref[[k]],length(env_pair_w))),type="response"))
     #avg_dis[[k]] <- unique(predict(dis_controlled_m,newdata = data.frame(env_dist=rep(ref[[k]],nrow(mat)-1)),type="response"))
     #avg_dis[[k]] <- unique(compute(dis_controlled_m,covariate = data.frame(scaled_env_dist=rep(scaled_ref[[k]],nrow(mat)-1)))$net.result)
     #avg_dis[[k]] <- avg_dis[[k]]*(max(reg_df[,1])-min(reg_df[,1]))+min(reg_df[,1])
-    predict_within <- data.frame(ifelse(is.ordered(env),as.numeric(env[k,]),env[k,]))
+    predict_within <- data.frame(env[k,])
     colnames(predict_within) <- colnames(env)
-    within_env <- predict(dis_controlled_m,newdata=predict_within)
+    within_env <- predict(dis_controlled_m,newdata=predict_within,type="response")
     within_env <- ifelse(within_env > 1, 1, ifelse(within_env < 0, 0, within_env))
     
-    predict_net<- as.data.frame(env_space)
+    predict_net<- env_space
     colnames(predict_net) <- colnames(env)
-    net_env <- c(predict(dis_controlled_m,newdata=predict_net))
+    net_env <- c(predict(dis_controlled_m,newdata=predict_net,type="response"))
     net_env <- ifelse(net_env > 1, 1, ifelse(net_env < 0, 0, net_env))
     total_env <- sum(net_env)/length(net_env)
     
-    between_env <- sum(net_env-c(within_env))/(length(net_env)-1) #doesn't matter including within-env in sum - always zero. -1 to remove within env
-    avg_dis[[k]] <- data.frame(c(within_env,between_env,total_env),c("Within","Between","Total"),env[k,],k)
-    names(avg_dis[[k]]) <- c("avg_dis","type",colnames(env),"Site")
+    if (length(predict_within) > 1) {
+    between_env_space <-  env_space[!apply(env_space == unlist(predict_within),1,all),]
+    } else {
+      between_env_space <-  env_space[!apply(env_space == c(predict_within),1,all),]
+    }
+    between_env <- sum(net_env-c(within_env))/(NROW(between_env_space)) #doesn't matter including within-env in sum - always zero. -1 to remove within env
+    
+    avg_dis[[k]] <- data.frame(c(within_env,between_env,total_env),c("Within","Between","Total"),c(env[k,]),k)
+    colnames(avg_dis[[k]]) <- c("avg_dis","type",colnames(env),"Site")
     
     #avg_dis[[k]] <- ifelse(avg_dis[[k]] > 1, 1,ifelse(avg_dis[[k]] < 0,0,avg_dis[[k]]))
   }
