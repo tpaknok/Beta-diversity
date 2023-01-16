@@ -12,7 +12,7 @@ site_dist.R calculates compositional uniqueness within a niche space using Gener
 ```
 site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
           mat,env_data,dissim="jaccard",C=0.5,
-          dissim_mat = NULL,dissim_env,
+          dissim_mat = NULL,
           env_space = NULL,
           family="gaussian",
           weights=NULL,
@@ -26,7 +26,7 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 |formula| A GAM/GAMM formula. Note that the LHS must start with pair_dist (see Example). Syntax as in mgcv.|
 |random| Optional; A random effect structure, as in mgcv.Default is NULL.|
 |correlation| Optional; A correlation structure, as in mgcv. Default is NULL.|
-|spatial.var| Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.|
+|spatial_var| Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.|
 |mat| A community data (species as column, site as row) as a data frame. Ignored if dissimilarity matrix is provided in dissim_mat.|
 |env_data| A data frame containing environmental data. Must be in data frame format.|
 |dissim| Default is jaccard dissimilarity, but other indices can be used. Values will be passed on to vegdist in vegan. See ?vegdist for a list of possible inputs.|
