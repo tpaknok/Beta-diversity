@@ -2,7 +2,9 @@
 
 This repository contains all codes required to reproduce results from the paper Tsang et al. (XXXXX)
 
-This function is likely to evolve based on users' feedback, and the latest version can be found in a separate file.
+The site_dist.R function is likely to evolve based on users' feedback, and the latest version can be found in a separate file (Last updated - 2023-01-16)
+
+# Description 
 
 site_dist.R calculates compositional uniqueness within a niche space using Generalized Additive Model or Generalized Additive Mixed Model
 
@@ -16,24 +18,37 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
           length.cont=25,...)
 ```
 
-Arguments
+# Arguments
 
 formula - A GAM/GAMM formula. Note that the LHS must start with pair_dist (see Example). Syntax as in mgcv.
+
 random - Optional; A random effect structure, as in mgcv.Default is NULL.
+
 correlation - Optional; A correlation structure, as in mgcv. Default is NULL.
+
 spatial.var - Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.
+
 mat - A community data (species as column, site as row) as a data frame. Ignored if dissimilarity matrix is provided in dissim_mat.
+
 env_data - A data frame containing environmental data. Must be in data frame format
+
 dissim - Default is jaccard dissimilarity, but other indices can be used. Values will be passed on to vegdist in vegan. See ?vegdist for a list of possible inputs
+
 C - For developmental purposes. Used for rarefaction pairwise beta diversity to obtain pairwise beta at specific completeness
+
 dissim_mat - Optional; A dissimilarity matrix as a dist object or data frame
+
 env_space - Optional; A data frame with environmental conditions in the model. If not provided the function will create a niche space automatically based on minima and maxima of each variable, and the number of virtual site for each axis equates to length.cont
+
 family - Default is gaussian. Other distribution can be used. See gamm in mgcv
+
 weight - Weight of each observation. Default is NULL - all observations have the same weight
+
 length.cont - Number of evenly-distributed sites on each environmental gradient. Default is 25.
+
 ... -  Other arguments that will be passed on to gam/gamm in mgcv
 
-Notes
+# Notes
 
 The users are recommended to read the documentation of the function gam and gamm.
 
@@ -41,7 +56,10 @@ The function will generate N evenly-distributed sites along each environmental g
 
 For total beta diversity, users can choose to provide the compositional data or its distance matrix. For other beta diversity, such as turnover component of beta diversity, functional trait and phylogenetic beta diversity, users should supply a distance matrix
 
-Example
+# Author
+Toby P.N. Tsang 
+
+# Example
 
 ```
 library(BiodiversityR)
