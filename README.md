@@ -32,7 +32,7 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 |dissim| Default is jaccard dissimilarity, but other indices can be used. Values will be passed on to vegdist in vegan. See ?vegdist for a list of possible inputs.|
 |C| For developmental purposes. Used for rarefaction pairwise beta diversity to obtain pairwise beta at specific completeness.|
 |dissim_mat| Optional; A dissimilarity matrix as a dist object or data frame.|
-|env_space| Optional; A data frame with environmental conditions in the model. If not provided the function will create a niche space automatically based on minima and maxima of each variable, and the number of virtual site for each axis equates to length.cont.|
+|env_space| Optional; A data frame with environmental conditions specified in the model. If not provided the function will create a niche space automatically based on minima and maxima of each variable, and the number of virtual site for each axis equates to length.cont.|
 |family| Default is gaussian. Other distribution can be used. See gamm in mgcv.|
 |weights| Weight of each observation. Default is NULL - all observations have the same weight.|
 |length.cont| Number of evenly-distributed sites on each environmental gradient. Default is 25.|
