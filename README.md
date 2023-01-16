@@ -40,9 +40,9 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 
 # Notes
 
-The users are recommended to read the documentation of the function gam and gamm.
+The users are recommended to read the documentation of gam and gamm in mgcv.
 
-The function will generate N evenly-distributed sites along each environmental gradient, and exhaust all possible combinations of them. Therefore, if 25 evenly-distributed sites were generated for each gradient, the total number of sites would be 25^N
+This function will generate N evenly-distributed virtual sites along each environmental gradient, and exhaust all possible combinations of them. Therefore, if 25 evenly-distributed sites were generated for each gradient, the total number of sites would be 25^N
 
 For total beta diversity, users can choose to provide the compositional data or its distance matrix. For other beta diversity, such as turnover component of beta diversity, functional trait and phylogenetic beta diversity, users should supply a distance matrix
 
