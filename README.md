@@ -12,7 +12,7 @@ site_dist.R calculates compositional uniqueness within a niche space using Gener
 ```
 site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
           mat,env_data,dissim="jaccard",C=0.5,
-          dissim_mat = NULL,dissim_env,
+          dissim_mat = NULL,
           env_space = NULL,
           family="gaussian",
           weights=NULL,
