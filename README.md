@@ -14,39 +14,28 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
           dissim_mat = NULL,dissim_env,
           env_space = NULL,
           family="gaussian",
-          weight=NULL,
+          weights=NULL,
           length.cont=25,...)
 ```
 
 # Arguments
 
-formula - A GAM/GAMM formula. Note that the LHS must start with pair_dist (see Example). Syntax as in mgcv.
-
-random - Optional; A random effect structure, as in mgcv.Default is NULL.
-
-correlation - Optional; A correlation structure, as in mgcv. Default is NULL.
-
-spatial.var - Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.
-
-mat - A community data (species as column, site as row) as a data frame. Ignored if dissimilarity matrix is provided in dissim_mat.
-
-env_data - A data frame containing environmental data. Must be in data frame format
-
-dissim - Default is jaccard dissimilarity, but other indices can be used. Values will be passed on to vegdist in vegan. See ?vegdist for a list of possible inputs
-
-C - For developmental purposes. Used for rarefaction pairwise beta diversity to obtain pairwise beta at specific completeness
-
-dissim_mat - Optional; A dissimilarity matrix as a dist object or data frame
-
-env_space - Optional; A data frame with environmental conditions in the model. If not provided the function will create a niche space automatically based on minima and maxima of each variable, and the number of virtual site for each axis equates to length.cont
-
-family - Default is gaussian. Other distribution can be used. See gamm in mgcv
-
-weight - Weight of each observation. Default is NULL - all observations have the same weight
-
-length.cont - Number of evenly-distributed sites on each environmental gradient. Default is 25.
-
-... -  Other arguments that will be passed on to gam/gamm in mgcv
+|Argument|Description|
+|---|---|
+|formula| A GAM/GAMM formula. Note that the LHS must start with pair_dist (see Example). Syntax as in mgcv.|
+|random| Optional; A random effect structure, as in mgcv.Default is NULL.|
+|correlation| Optional; A correlation structure, as in mgcv. Default is NULL.|
+|spatial.var| Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.|
+|mat| A community data (species as column, site as row) as a data frame. Ignored if dissimilarity matrix is provided in dissim_mat.|
+|env_data| A data frame containing environmental data. Must be in data frame format.|
+|dissim| Default is jaccard dissimilarity, but other indices can be used. Values will be passed on to vegdist in vegan. See ?vegdist for a list of possible inputs.|
+|C| For developmental purposes. Used for rarefaction pairwise beta diversity to obtain pairwise beta at specific completeness.|
+|dissim_mat| Optional; A dissimilarity matrix as a dist object or data frame.|
+|env_space| Optional; A data frame with environmental conditions in the model. If not provided the function will create a niche space automatically based on minima and maxima of each variable, and the number of virtual site for each axis equates to length.cont.|
+|family| Default is gaussian. Other distribution can be used. See gamm in mgcv.|
+|weights| Weight of each observation. Default is NULL - all observations have the same weight.|
+|length.cont| Number of evenly-distributed sites on each environmental gradient. Default is 25.|
+|...| Other arguments that will be passed on to gam/gamm in mgcv|
 
 # Notes
 
