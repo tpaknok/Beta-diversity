@@ -63,7 +63,6 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
       }
     }
   
-  message("start creating environmental space")
   env_space <- expand.grid(env_list)
   message("finish creating environmental space")
   
