@@ -40,6 +40,9 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 
 # Notes
 
+If factors are ordered, the function will convert them into numeric variable before the regression. The order will follow how the factors were ordered originally.
+For botho ordinal and nominal variables, in the formula simply set ~Factor1+Factor2+Factor3....etc
+
 The users are recommended to read the documentation of gam and gamm in mgcv.
 
 This function will generate N evenly-distributed virtual sites along each environmental gradient, and exhaust all possible combinations of them. Therefore, if 25 evenly-distributed sites were generated for each gradient, the total number of sites would be 25^N
