@@ -1,360 +1,245 @@
-library(CommEcol)
-library(plyr)
-library(vegan)
-coo<- c(seq(10,100,10))
-
-
-g1 <- compas(S=50, dims=1, am=1, beta.R=1, clump=1,coords=coo, 
-       n.quanti=0.01,  n.quali=0.01, add1=0.05)
-
-g2 <- compas(S=50, dims=1, am=1, beta.R=1, clump=1,coords=coo, 
-       n.quanti=0.01,  n.quali=0.01, add1=0.05)
-
-library(BAT)
-pa_g1 <- decostand(g1,"pa")
-colnames(pa_g1) <- paste0(colnames(pa_g1),"_g1")
-pa_g2 <- decostand(g2,"pa")
-colnames(pa_g2) <- paste0(colnames(pa_g2),"_g2")
-
-binded_df <- rbind.fill(as.data.frame(pa_g1),as.data.frame(pa_g2))
-binded_df$group <- c(rep("Group1",10),rep("Group2",10))
-binded_df[is.na(binded_df)] <- 0
-
-LCBD_balanced <- LCBD.comp(vegdist(binded_df[,colnames(binded_df) != "group"],"jaccard"))$LCBD
-m_balanced <- lm(LCBD_balanced~group,data=binded_df)
-summary(m_balanced)
-
-binded_df <- binded_df[c(sample(1:10,3),sample(11:20,10)),]
-LCBD <- LCBD.comp(vegdist(binded_df[,colnames(binded_df) != "group"],"jaccard"))
-LCBD_df <- data.frame(LCBD=LCBD$LCBD,group=binded_df$group)
-
-LCBD_env <- LCBD.comp(gower(binded_df$group))$LCBD
-
-LCBD_null <- NULL
-coef_null <- NULL
-for (i in 1:100){
-  message(i)
-  nm1 <- nullmodel(binded_df[binded_df$group == "Group1",colnames(binded_df) != "group"],"quasiswap")
-  sm1 <- as.data.frame(simulate(nm1,1))
-  nm2 <- nullmodel(binded_df[binded_df$group == "Group2",colnames(binded_df) != "group"],"quasiswap")
-  sm2 <- as.data.frame(simulate(nm2,1))
-
-  sm <- rbind(sm1,sm2)
-  sm <- sm[,colSums(sm) > 0]
-  #nm <- nullmodel(binded_df[,colnames(binded_df) != "group"],"c0")
-  #sm <- as.data.frame(simulate(nm,1))
-  
-  LCBD_null <- cbind(LCBD_null,LCBD.comp(vegdist(sm,"jaccard"))$LCBD)
-  temp_null <- LCBD.comp(vegdist(sm,"jaccard"))$LCBD
-  
-  m_iter<-glmmTMB(temp_null~group,data=binded_df)
-  summary(m_iter)
-  coef_null <- c(coef_null,summary(m_iter)$coefficients$cond[2,1])
-}
-
-
-library(car)
-m_unbalanced<-glmmTMB(LCBD~group,data=LCBD_df)
-summary(m_unbalanced)
-summary(m_unbalanced)$coefficients$cond[2,1] > coef_null
-Anova(m,white.adjust=T)
-predict(m,newdata=data.frame(group=c("Group1","Group2")),type="response")
-
-
 ###
-m2 <- glm(binded_df$sp.1_g1~group,data=binded_df,family="binomial")
-predict(m2,type="response")
-
-#####
-library(plyr)
-library(BAT)
+library(betapart)
 library(adespatial)
 library(vegan)
-library(CommEcol)
-source("C:/Users/pakno/OneDrive/Desktop/LCBD/site_dist.R")
-random_sample <- seq(6,20,2)
-n_h1 <- 20
-n_h2 <- 20
-site_h1 <- 20
-site_h2 <- 20
-SR <- 5
-dissim <- "bray"
-resample_repeat <- 1
-result_df <- temp_result_df<-NULL
-
-  for (j in 1:100) {
-    message(j)
-  h1_mat <- matrix(0,nrow=site_h1,ncol=n_h1)
-  for (i in 1:site_h1){
-    seq <- sample(1:n_h1,SR)
-    h1_mat[i,seq] <- 1
-  }
-  
-  colnames(h1_mat) <- paste0("sp",1:n_h1,"h1")
-  
-  
-  h2_mat <- matrix(0,nrow=site_h2,ncol=n_h2)
-  for (i in 1:site_h2){
-    seq <- sample(1:n_h2,SR)
-    h2_mat[i,seq] <- 1
-  }
-  
-  colnames(h2_mat) <- paste0("sp",1:n_h2,"h2")
-  
-  h1_mat <- h1_mat[,colSums(h1_mat) > 0]
-  h2_mat <- h2_mat[,colSums(h2_mat) > 0]
-  
-  mat <- rbind.fill(as.data.frame(h1_mat),as.data.frame(h2_mat))
-  mat[is.na(mat)] <- 0
-  group <- c(rep("Group1",site_h1),rep("Group2",site_h2))
-  
-  LCBD_balanced <- LCBD.comp(vegdist(mat,dissim),sqrt.D=T)$LCBD*LCBD.comp(vegdist(mat,dissim),sqrt.D=T)$beta[[1]]
-  avg_dis <- as.matrix(vegdist(mat,dissim))
-  avg_dis[col(avg_dis)==row(avg_dis)] <- NA
-  avg_dis <- colMeans(avg_dis,na.rm=T)
-  
-  #LCBD_balanced <- LCBD.comp(dis.nness(mat),sqrt.D=T)$LCBD
-  #LCBD_balanced <- LCBD.comp(ESS(mat))$LCBD
-  m_balanced <- lm(LCBD_balanced~group)
-  summary(m_balanced)
-  m_balanced_ad <- lm(avg_dis~group)
-  summary(m_balanced_ad)
-  
-  for (sample in random_sample) {
-  message(sample)
-  temp_result_df <- NULL
-  
-  for (m in 1:resample_repeat) {  
-    message("m = ",m)
-  resample <- c(sample(1:20,sample),sample(21:40,20))
-  subset_mat <- mat[resample,]
-  subset_mat <- subset_mat[,colSums(subset_mat) > 0]
-  subset_group <- group[resample]
-  LCBD_env <- LCBD.comp(gower(subset_group),sqrt.D=T)$LCBD
-  
-  LCBD <- LCBD.comp(vegdist(subset_mat[order(as.numeric(rownames(subset_mat))),],dissim),sqrt.D=T)$LCBD*LCBD.comp(vegdist(mat,dissim),sqrt.D=T)$beta[[1]]
-  avg_dis <- as.matrix(vegdist(subset_mat,dissim))
-  avg_dis[col(avg_dis)==row(avg_dis)] <- NA
-  
-  #LCBD <- LCBD.comp(dis.nness(subset_mat))
-  #LCBD <- LCBD.comp(ESS(subset_mat))
-  
-  LCBD_df <- data.frame(LCBD=LCBD,avg_dis=colMeans(avg_dis,na.rm=T),group=subset_group )
-  
-  ####
-  m_unbalanced <- lm(LCBD~subset_group,data=LCBD_df)
-  summary(m_unbalanced)
-  
-  m_unbalanced_ad <- lm(avg_dis~subset_group,data=LCBD_df)
-  summary(m_unbalanced_ad)
-  ####
-  n <- rowSums(as.matrix(1-gower(subset_group)))+1
-  
-  rep <- sqrt(LCBD_env/min(LCBD_env))*min(n)
-
-  new_mat <- NULL
-  for (i in 1:nrow(subset_mat)) {
-    new_mat <- rbind(new_mat,subset_mat[rep(i, rep[[i]]), ])
-  }
-  
-  dist<- sqrt(vegdist(new_mat,dissim))
-  #dist <- sqrt(ESS(new_mat))
-  #dist <- sqrt(dis.nness(new_mat))
-  ord <- wcmdscale(dist,eig=T)
-  unique.ord.point <- ord$point
-  unique.ord.negaxes <- ord$negaxes
-  #unique.ord.point <- unique.ord.point[!grepl("\\.",rownames(unique.ord.point)),]
-  #unique.ord.negaxes <- unique.ord.negaxes[!grepl("\\.",rownames(unique.ord.negaxes)),]
-
-  cleaned.dist <- sqrt(dist(unique.ord.point)^2)
-  #cleaned.dist <- sqrt(dist(unique.ord.point)^2 - dist(unique.ord.negaxes)^2)
-  cleaned.dist[is.nan(cleaned.dist)] <- 0
-  
-  lower.tri.dist <- as.matrix(cleaned.dist)[lower.tri(cleaned.dist)]
-  
-  SSTotal <- sum(lower.tri.dist^2)/nrow(unique.ord.point)
-  
-  centroid_dist <- betadisper(cleaned.dist,group=rep("a",nrow(unique.ord.point)),type="centroid")
-  centroid_dist <- centroid_dist$distances[!grepl("\\.",rownames(unique.ord.point))]
-  #w <-apply(as.matrix(n),2,function(x) sqrt(x/(x-1)))
-  w <- 1
-  LCBD <-(centroid_dist*w)^2/sum((centroid_dist*w)^2)*sum((centroid_dist*w)^2)
-  
-  m_env_controlled <- lm(LCBD~subset_group)
-  summary(m_env_controlled)
-
-  #new_LCBD <- centroid_dist$distances^2/SSTotal #trial
-  #sum(centroid_dist$distances^2/SSTotal)
-  
-  avg_dis <- list()
-  for (i in 1:length(subset_group)){
-    w <- sqrt(LCBD.comp(gower(subset_group[-i]))$LCBD/min(LCBD.comp(gower(subset_group[-i]))$LCBD))
-    avg_dis[[i]] <- weighted.mean(as.matrix(vegdist(subset_mat,dissim))[-i,i],w=w)
-  }
-
-  avg_dis <- do.call(rbind,avg_dis)
-  m_env_controlled_ad <- lm(avg_dis~subset_group)
-  summary(m_env_controlled_ad)
-  
-  #reg_df <- site_dist(subset_mat,subset_group,"bray","gower",0.5)
-  #m_env_controlled_ad <- lm(avg_dis~subset_group,data=reg_df)
-  
-  temp_result <- c(summary(m_balanced)$coefficients[1,1],
-                   summary(m_balanced)$coefficients[2,c(1,4)],
-                   summary(m_unbalanced)$coefficients[1,1],
-                   summary(m_unbalanced)$coefficients[2,c(1,4)],
-                   summary(m_env_controlled)$coefficients[1,1],
-                   summary(m_env_controlled)$coefficients[2,c(1,4)],
-                   summary(m_balanced_ad)$coefficients[1,1],
-                   summary(m_balanced_ad)$coefficients[2,c(1,4)],
-                   summary(m_unbalanced_ad)$coefficients[1,1],
-                   summary(m_unbalanced_ad)$coefficients[2,c(1,4)],
-                   summary(m_env_controlled_ad)$coefficients[1,1],
-                   summary(m_env_controlled_ad)$coefficients[2,c(1,4)])
-  
-  temp_result <- as.data.frame(t(temp_result))
-  temp_result$balanced_eff <- temp_result[,2]/temp_result[,1]*100
-  temp_result$unbalanced_eff <- temp_result[,5]/temp_result[,4]*100
-  temp_result$env_controlled_eff <- temp_result[,8]/temp_result[,7]*100
-  temp_result$sample <- sample
-  temp_result$resample_repeat <- m
-  temp_result$matrix <- j
-  temp_result_df <- rbind(temp_result_df,temp_result)
-  }
-
-#boxplot(temp_result_df$balanced_eff,temp_result_df$unbalanced_eff,temp_result_df$env_controlled_eff)
-#boxplot(temp_result_df[,2],temp_result_df[,5],temp_result_df[,8])
-
-result_df <- rbind(result_df,temp_result_df)
-
-#t.test(temp_result_df$balanced_eff,temp_result_df$env_controlled_eff,paired = T)
-#t.test(temp_result_df$result_df[,2],temp_result_df$result_df[,8],paired = T)
-#t.test(temp_result_df$result_df[,5],temp_result_df$result_df[,8],paired = T)
-  }
-  }
-
+library(BAT)
+library(car)
+library(dplyr)
+library(tidyverse)
+library(plyr)
+library(betaC)
+library(rstatix)
 library(ggplot2)
-plot_df <- data.frame(Effect = c(result_df[,2],result_df[,5],result_df[,8]), Group = c(rep("Equal effort",nrow(result_df)),rep("Unequal effort - Unweighted",nrow(result_df)),rep("Unequal effort - Weighted",nrow(result_df))),sample=rep(result_df$sample,3))
-plot_df$id <- interaction(plot_df$Group,plot_df$sample)
 
-p_dist <- ggplot(plot_df)+
-  geom_boxplot(aes(y=Effect,x=sample,Group=id,fill=Group))+
-  ylab("Effect based on distance to centroid")+
-  xlab("Number of assemblages of Habitat A")+
-  theme_classic()
+source("site_dist_testing.R")
 
-plot(p_dist)
+set.seed(1000)
 
-library(ggplot2)
-plot_df_ad <- data.frame(Effect = c(result_df[,11],result_df[,14],result_df[,17]), Group = c(rep("Equal effort",nrow(result_df)),rep("Unequal effort - Unweighted",nrow(result_df)),rep("Unequal effort - Weighted",nrow(result_df))),sample=rep(result_df$sample,3))
-plot_df_ad$id <- interaction(plot_df_ad$Group,plot_df_ad$sample)
+dissim = "jaccard"
+sample_pattern <- data.frame(A=c(20,10,5,10),B=c(20,10,15,30))
+sample_label <- paste0("(",sample_pattern$A,",",sample_pattern$B,")")
 
-p <- ggplot(plot_df_ad)+
-  geom_boxplot(aes(y=Effect,x=sample,group=id,fill=Group))+
-  ylab("Effect based on average pairwise dissimilarity")+
-  xlab("Number of assemblages of Habitat A")+
-  theme_classic()
+data(BCI)
+nm <- nullmodel(BCI,"r2dtable")
+mat1 <- as.data.frame(simulate(nm,nsim=1))
+mat2 <- as.data.frame(simulate(nm,nsim=1))
+colnames(mat2) <- paste0(colnames(mat2),"_B")
+mat <- rbind.fill(mat1,mat2)
+mat[is.na(mat)] <- 0
+env_data <- c(rep("A",50),rep("B",50))
+predict_df <- result_df <- cor_df_subset_long_all <- NULL
 
-plot(p)
+avg_dis_matrix <- as.matrix(vegdist(mat,dissim))
+#C <- C_target(mat,factor=1)
+#beta_pairwise<- beta_stand(mat, func = list( "beta_C"), setsize=2,args = list(C=C),summarise=F)
+#avg_dis_matrix <- matrix(NA,100,100)
+#avg_dis_matrix[lower.tri(avg_dis_matrix,diag=F)] <- beta_pairwise
+#avg_dis_matrix[upper.tri(avg_dis_matrix,diag=F)] <- t(avg_dis_matrix)[upper.tri(avg_dis_matrix,diag=F)]
 
-library(ggplot2)
-plot_df_ad <- data.frame(Effect = c(result_df[,8],result_df[,11],result_df[,14]), Group = c(rep("Equal effort",nrow(result_df)),rep("Unequal effort - Unweighted",nrow(result_df)),rep("Unequal effort - Weighted",nrow(result_df))),sample=rep(result_df$sample,3))
-plot_df_ad$id <- interaction(plot_df_ad$group,plot_df_ad$sample)
+diag(avg_dis_matrix) <- NA
+avg_dis <- apply(avg_dis_matrix,2,function(x) mean(x,na.rm=T))
 
-p_ad <- ggplot(plot_df_ad)+
-  geom_boxplot(aes(y=Effect,x=sample,group=id,fill=group))+
-  ylab("Effect based on average pairwise dissimilarity")+
-  xlab("Number of assemblages of Habitat A")+
-  theme_classic()
+m_observed_ad_full <- lm(avg_dis~env_data)
+summary(m_observed_ad_full)
+Anova(m_observed_ad_full,white.adjust=T)
+result_observed_ad_full <- Anova(m_observed_ad_full,white.adjust=T)
+predict_observed_ad_full <- unique(predict(m_observed_ad_full,type="response"))
 
-plot(p_ad)
+LCBD_full <- LCBD.comp(vegdist(mat,dissim))$LCBD
+m_observed_LCBD_full <- lm(LCBD_full~env_data)
+summary(m_observed_LCBD_full)
+predict_observed_LCBD_full <- unique(predict(m_observed_LCBD_full,type="response"))
 
-library(ggpubr)
-p <- ggarrange(p_dist,p,common.legend = T, legend="bottom")
-plot(p)
-ggsave("p3.tiff",dpi=800,,compression="lzw")
-### nestedness
+CD_full <- betadisper(as.dist(avg_dis_matrix),group = c(rep("A",nrow(mat))),type="centroid",sqrt.dist=T)$distance
+m_observed_CD_full <- lm(CD_full~env_data)
+summary(m_observed_CD_full)
+predict_observed_CD_full <- unique(predict(m_observed_CD_full,type="response"))
 
-env <- seq(20,30,by=2)
-site_initial <- 10
-sp_richness <- 10
+env_data <- data.frame(env_data=env_data)
+reg_df_full <- site_dist(formula=pair_dist~env_data,mat=mat,env_data=env_data)
 
-for (i in 1:100) {
-  site_mat_list <- list()
-  for (j in 1:length(env)){
-    sp_pool <- 2*env[[j]]-20
-    sp_pool <- round(sp_pool)
-    site_mat <- matrix(0,nrow=site_initial,ncol=sp_pool)
-    for (k in 1:nrow(site_mat)) {
-    site_mat[k,sample(1:sp_pool,sp_richness)] <- 1 
-    }
-    colnames(site_mat) <- paste0("sp",1:sp_pool)
-    site_mat_list[[j]] <- site_mat
+m_niche_full <- lm(avg_dis~env_data,data=reg_df_full)
+result_niche_full <- Anova(m_niche_full,white.adjust=T)
+summary(m_niche_full)
+predict_niche_full <- unique(predict(m_niche_full,type="response"))
+
+u_df_full <- data.frame(uniche=reg_df_full$avg_dis,uobserved=avg_dis,LCBD_full=LCBD_full,CD_full=CD_full)
+u_df_corr_full <- cor(u_df_full)
+u_df_corr_full_long <- cor_gather(u_df_corr_full)
+
+for (j in 1:nrow(sample_pattern)) {
+  for (sim in 1: 100) {
+    message(sim)
+    
+    sub_mat_seq <- c(sample(1:(nrow(mat)/2),sample_pattern[j,1]),sample((nrow(mat)/2+1):nrow(mat),sample_pattern[j,2]))
+    sub_mat <- mat[sub_mat_seq,]
+    
+    avg_dis_matrix <- as.matrix(vegdist(sub_mat,dissim))
+    #C <- C_target(sub_mat,factor=1)
+    #beta_pairwise_subset<- beta_stand(sub_mat, func = list( "beta_C"), setsize=2,args = list(C=C),summarise=F)
+    #avg_dis_matrix <- matrix(NA,sum(sample_pattern[j,]),sum(sample_pattern[j,]))
+    #avg_dis_matrix[lower.tri(avg_dis_matrix,diag=F)] <- beta_pairwise_subset
+    #avg_dis_matrix[upper.tri(avg_dis_matrix,diag=F)] <- t(avg_dis_matrix)[upper.tri(avg_dis_matrix,diag=F)]
+    
+    diag(avg_dis_matrix) <- NA
+    avg_dis <- apply(avg_dis_matrix,2,function(x) mean(x,na.rm=T))
+    
+    sub_env_data <- env_data[sub_mat_seq,]
+    
+    m_observed <- lm(avg_dis~sub_env_data)
+    summary(m_observed)
+    Anova(m_observed,white.adjust=T)
+    p_observed <- Anova(m_observed,white.adjust=T)
+    predict_observed <- unique(predict(m_observed,type="response"))
+    
+    LCBD <- LCBD.comp(vegdist(sub_mat,dissim))$LCBD
+    m_observed_LCBD <- lm(LCBD~sub_env_data)
+    summary(m_observed_LCBD)
+    predict_observed_LCBD <- unique(predict(m_observed_LCBD,type="response"))
+    
+    CD <- betadisper(as.dist(avg_dis_matrix),group = c(rep("A",nrow(sub_mat))),type="centroid",sqrt.dist=T)$distance
+    m_observed_CD <- lm(CD~sub_env_data)
+    summary(m_observed_CD)
+    predict_observed_CD <- unique(predict(m_observed_CD,type="response"))
+    
+    sub_env_data <- data.frame(env_data=sub_env_data)
+    reg_df <- site_dist(formula=pair_dist~env_data,mat=sub_mat,env_data=sub_env_data)
+    
+    m_niche <- lm(avg_dis~env_data,data=reg_df)
+    p_niche <- Anova(m_niche,white.adjust=T)
+    summary(m_niche)
+    predict_niche <- unique(predict(m_niche,type="response"))
+    
+    u_df <- data.frame(uniche=reg_df$avg_dis,uobserved=avg_dis,LCBD=LCBD,CD=CD)
+    u_cor_subset <- cor(u_df)
+    u_cor_subset_long <- cor_gather(u_cor_subset)
+    u_cor_subset_long$sim <- sim
+    u_cor_subset_long$Effort <- sample_label[[j]]
+    
+    cor_df_subset_long_all <- rbind(cor_df_subset_long_all,u_cor_subset_long) 
+    
+    Effort <- sample_label[[j]]
+    
+    predict_df <- rbind(predict_df,as.data.frame(rbind(cbind(predict_observed,env=c("A","B"),"Observed",sim,Effort),
+                                                       cbind(predict_niche,env=c("A","B"),"Niche",sim,Effort),
+                                                       cbind(predict_observed_LCBD,c("A","B"),"Observed_LCBD",sim,Effort),
+                                                       cbind(predict_observed_CD,c("A","B"),"Observed_CD",sim,Effort))))
+    
+    temp_df <- data.frame(p_observed = summary(m_observed)$coefficients[2,4],coef_observed=summary(m_observed)$coefficients[2,1],
+                          p_niche = summary(m_niche)$coefficients[2,4],coef_niche=summary(m_niche)$coefficients[2,1],
+                          p_observed_LCBD = summary(m_observed_LCBD)$coefficients[2,4],coef_observed_LCBD=summary(m_observed_LCBD)$coefficients[2,1],
+                          p_observed_CD = summary(m_observed_CD)$coefficients[2,4],coef_observed_CD=summary(m_observed_CD)$coefficients[2,1],
+                          sample_pattern = Effort,sim=sim)
+    
+    result_df <- rbind(result_df,temp_df)
+    
   }
-  
-  mat <- do.call(rbind.fill,lapply(site_mat_list,as.data.frame))
-  mat[is.na(mat)]<-0
-  env_data <- rep(env,each=site_initial)
-  
-  avg_dis <- as.matrix(vegdist(mat,dissim))
-  avg_dis[col(avg_dis)==row(avg_dis)] <- NA
-  avg_dis <- colMeans(avg_dis,na.rm=T)
-  
-  m_balanced_ad <- lm(avg_dis~env_data)
-  summary(m_balanced_ad)
-  
-  reg_df <- site_dist(mat,env_data,"bray","gower",0)
-  m_env_controlled_ad <- lm(avg_dis~env,data=reg_df)
-  summary(m_env_controlled_ad)
 }
 
-### mid-domain
+balanced <- cor_df_subset_long_all[cor_df_subset_long_all$Effort == "(10,10)" | cor_df_subset_long_all$Effort == "(20,20)",]
+unbalanced <- cor_df_subset_long_all[cor_df_subset_long_all$Effort != "(10,10)" & cor_df_subset_long_all$Effort != "(20,20)",]
 
-env <- seq(20,30,5)
-site_initial <- 20
-sp_richness <- 10
-dissim = "bray"
+unbalanced_obs <- subset(unbalanced,var1 != "uniche" & var2 != "uniche")
+unbalanced_niche <- subset(unbalanced,var1 == "uniche" | var2 == "uniche")
+unbalanced_niche <- unbalanced_niche[!(unbalanced_niche$var1 == "uniche" & unbalanced_niche$var2 == "uniche"),]
+unbalanced_niche <- subset(unbalanced_niche,var1 == "uniche")
 
-result_df <- list()
-for (i in 1:100) {
-  message("i = ",i)
-  site_mat_list <- list()
-  
-  mat <- matrix(0,site_initial*length(env),40)
-  
-  for (j in 1:nrow(mat)) {
-    if (j <= nrow(mat)/3) {
-    mat[j,sample(1:20,sp_richness)] <- 1
-    }  else if (j > nrow(mat)/3*2){
-      mat[j,sample(21:40,sp_richness)] <- 1
-    } else {
-      mat[j,sample(1:40,sp_richness)] <- 1
-    }
-  }
-  
-  env_data <- rep(env,each=site_initial)
-  
-  avg_dis <- as.matrix(vegdist(mat,dissim))
-  avg_dis[col(avg_dis)==row(avg_dis)] <- NA
-  avg_dis <- colMeans(avg_dis,na.rm=T)
-  
-  env_dist <- as.matrix(gower(env_data))
-  env_dist[col(env_dist)==row(env_dist)] <- NA
-  env_dist <- colMeans(env_dist,na.rm=T)
-  
-  plot(env_data,avg_dis)
-  m_balanced_ad <- lm(avg_dis~env_data+I(env_data^2))
-  summary(m_balanced_ad)
+cor_metric_labs <- as_labeller(c(CD = "Distance~to~centroid",
+                                 LCBD = "LCBD",
+                                 uobserved = "U[observed]"),
+                               default = label_parsed)
 
-  reg_df <- site_dist(mat,env_data,"bray","gower",0)
-  m_env_controlled_ad <- lm(avg_dis~env+I(env^2),data=reg_df)
-  summary(m_env_controlled_ad)
-  plot(reg_df$env,reg_df$avg_dis)
-  
-  result_df[[i]] <- c(summary(m_balanced_ad)$coefficients[1,1],
-                       c(summary(m_balanced_ad)$coefficients[2:3,c(1,4)]),
-                       summary(m_env_controlled_ad)$coefficients[1,1],
-                       c(summary(m_env_controlled_ad)$coefficients[2:3,c(1,4)]))
-}
+cor_p <- ggplot(data=unbalanced_niche)+
+  geom_violin(aes(y=cor,x=Effort))+
+  facet_wrap(~var2,scale="fixed",labeller= labeller(var2=cor_metric_labs))+
+  ylab("Pearson's coefficient")+
+  xlab("Sampling Effort (A,B)")+
+  theme_classic()
+plot(cor_p)
 
-result_df <- do.call(rbind,result_df)
+ggsave("FigS1.tiff",width=16.8,height=8.4,units="cm",compression="lzw")
+colnames(predict_df) <- c("predicted_uniqueness","Cond","Metric","sim","Effort")
+predict_df$predicted_uniqueness <- as.numeric(predict_df$predicted_uniqueness)
+predict_df$id <- interaction(predict_df$Cond,predict_df$Metric)
+
+average_set <- aggregate(predicted_uniqueness~Cond+Effort+Metric,mean,data=predict_df)
+
+long_result <- data.frame(coef=-c(result_df$coef_observed_LCBD,result_df$coef_observed_CD,result_df$coef_observed,result_df$coef_niche),
+                          Effort= rep(result_df$sample_pattern,4),
+                          Metric=c(rep("LCBD",400),rep("CD",400),rep("Uobserved",400),rep("Uniche",400)),
+                          Sig = c(rep(c(rep("Sig",100),rep("Insig",100)),6),rep("Insig",400)))
+
+hline_result <- data.frame(coef=-c(coefficients(m_observed_CD_full)[[2]],coefficients(m_observed_LCBD_full)[[2]],coefficients(m_observed_ad_full)[[2]],coefficients(m_niche_full)[[2]]),
+                           Metric=c("CD","LCBD","Uobserved","Uniche"))
+
+long_result$Effort <-  factor(long_result$Effort, levels = c("(10,10)", "(5,15)","(20,20)","(10,30)"))
+long_result$Metric <- factor(long_result$Metric, levels=c("LCBD","CD","Uobserved","Uniche"))
+hline_result$Metric <- factor(hline_result$Metric, levels=c("LCBD","CD","Uobserved","Uniche"))
+
+long_result <- subset(long_result,Metric == "Uobserved" | Metric == "Uniche")
+long_result$Metric <- droplevels(long_result$Metric)
+hline_result <- subset(hline_result, Metric == "Uobserved" | Metric == "Uniche")
+hline_result$Metric <- droplevels(as.factor(hline_result$Metric))
+hline_result$label <- c("(a)","(b)")
+
+metric_labs <- as_labeller(c(Uobserved = "U[observed]",
+                             Uniche = "U[niche]"),
+                           default = label_parsed)
+
+p5_ef<- ggplot(long_result)+
+  geom_violin(aes(y=coef,x=Effort,fill=Metric),show.legend=F)+
+  geom_hline(data=hline_result,aes(yintercept=coef,group=Metric),linetype=2)+
+  geom_text(data=hline_result,aes(label=label),x=-Inf,y=Inf,hjust=-0.5,vjust=1)+
+  ylab("Uniqueness differences across habitats (A-B)")+
+  xlab("Sampling effort (A,B)")+
+  facet_wrap(~Metric,labeller= labeller(Metric=metric_labs))+
+  scale_fill_discrete(labels=c(expression(U[observed]),expression(U[niche])))+
+  theme_classic()+
+  theme(legend.position="bottom")
+
+plot(p5_ef)
+
+ggsave("p_factor_jaccard.tiff",dpi=800,width=12.6,height=12.6,compression="lzw",units="cm")
+
+long_result_observed <- data.frame(coef=-c(result_df$coef_observed,result_df$coef_observed_LCBD,result_df$coef_observed_CD),
+                                   Effort = rep(result_df$sample_pattern,3),
+                                   Metric = c(rep("Observed",400),rep("LCBD",400),rep("CD",400)))
+long_result_observed$Effort <-  factor(long_result_observed$Effort, levels = c("(10,10)", "(5,15)","(20,20)","(10,30)"))
+
+long_result_ref <- data.frame(coef=-c(coefficients(m_observed_ad_full)[[2]],coefficients(m_observed_LCBD_full)[[2]],coefficients(m_observed_CD_full)[[2]]),
+                              Metric = c("Observed","LCBD","CD"))
+
+metric_labs <- as_labeller(c(Observed="U[observed]",
+                             LCBD = "LCBD",
+                             CD = "Distance to centroid",default = label_parsed))
+
+p5_ef_SI <- ggplot(long_result_observed)+
+  geom_violin(aes(y=coef,x=Effort,fill=Metric))+
+  geom_hline(data=long_result_ref,aes(yintercept=coef,group=Metric),linetype=2)+
+  ylab("Expected uniqueness difference (A-B)")+
+  xlab("Sampling effort (A,B)")+
+  scale_fill_discrete(labels=c(expression(U[niche]),"LCBD","Distance to centroid"))+
+  facet_wrap(~Metric,scale="free",ncol=3,labeller= labeller(Metric=metric_labs))+
+  theme_classic()+
+  theme(legend.position="none")
+
+plot(p5_ef_SI)
+
+ggsave("p_factor_SI.tiff",dpi=800,width=16,height=8,compression="lzw",units="cm")
+
+t.test(result_df$coef_observed[result_df$sample_pattern == "(20,20)"]-coefficients(m_observed_ad_full)[[2]])
+t.test(result_df$coef_niche[result_df$sample_pattern == "(20,20)"]-coefficients(m_observed_ad_full)[[2]])
+
+t.test(result_df$coef_observed[result_df$sample_pattern == "(10,10)"]-coefficients(m_observed_ad_full)[[2]])
+t.test(result_df$coef_niche[result_df$sample_pattern ==  "(10,10)"]-coefficients(m_observed_ad_full)[[2]])
+
+t.test(result_df$coef_observed[result_df$sample_pattern == "(10,30)"]-coefficients(m_observed_ad_full)[[2]])
+t.test(result_df$coef_niche[result_df$sample_pattern == "(10,30)"]-coefficients(m_observed_ad_full)[[2]])
+
+t.test(result_df$coef_observed[result_df$sample_pattern == "(5,15)"]-coefficients(m_observed_ad_full)[[2]])
+t.test(result_df$coef_niche[result_df$sample_pattern == "(5,15)"]-coefficients(m_observed_ad_full)[[2]])
+
+length(which(merged_coef_df$p_niche[merged_coef_df$Effort == "(20,20)"] < 0.05))
+length(which(merged_coef_df$p_niche[merged_coef_df$Effort == "(10,10)"] < 0.05))
+length(which(merged_coef_df$p_niche[merged_coef_df$Effort == "(10,30)"] < 0.05))
+length(which(merged_coef_df$p_niche[merged_coef_df$Effort == "(5,15)"] < 0.05))
