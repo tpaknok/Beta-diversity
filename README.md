@@ -1,8 +1,9 @@
-# Environmental availablity and uniqueness (Latest version - 2023-01-16)
+# Environmental availablity and uniqueness
+# (Latest version - 2023-01-16)
 
-This repository contains all codes required to reproduce results from the paper Tsang et al. (XXXXX)
+This repository contains all codes required to reproduce results in Tsang et al. (2024)
 
-The site_dist.R function is likely to evolve based on users' feedback, and the latest version can be found in a separate file
+The site_dist.R function is likely to evolve based on users' feedback. Both the latest and old version will be kept here
 
 # Description 
 
@@ -46,7 +47,7 @@ The function will generate N evenly-distributed sites along each environmental g
 For total beta diversity, users can choose to provide the compositional data or its distance matrix. For other beta diversity, such as turnover component of beta diversity, functional trait and phylogenetic beta diversity, users should supply a distance matrix
 
 # Author
-Toby P.N. Tsang 
+Toby P.N. Tsang (paknok.tsang@utoronto.ca)
 
 # Example
 
