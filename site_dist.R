@@ -1,5 +1,5 @@
 site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
-                      mat,env_data,dissim="jaccard",C=0.5,dissim_mat = NULL,dissim_env,
+                      mat=NULL,env_data,dissim="jaccard",C=0.5,dissim_mat = NULL,
                       env_space = NULL,
                       family="gaussian",
                       weights=NULL,
@@ -12,6 +12,8 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   
   avg_dis <- list()
   env <- as.data.frame(env_data)
+  
+  #####DEVELOPMENTAL PURPOSES
   if (dissim == "beta_C" & is.null(dissim_mat)) {
     message("rarefying....")
     beta_pairwise<- beta_stand(mat, func = list( "beta_C"), setsize=2,args = list(C=C),summarise=F)
@@ -19,7 +21,8 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
     dis_matrix[lower.tri(avg_dis_matrix,diag=F)] <- beta_pairwise
     dis_matrix[upper.tri(avg_dis_matrix,diag=F)] <- t(avg_dis_matrix)[upper.tri(avg_dis_matrix,diag=F)]
   } 
-    
+  ######  
+  
   if (dissim != "beta_C" & is.null(dissim_mat)) {
     dis_matrix <- vegdist(mat,dissim)
   } 
@@ -70,8 +73,8 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   
   for (k in 1:nrow(dis_matrix)){
     message(k,"/",nrow(dis_matrix))
-    total <- t(apply(mat,1,function(x) colSums(rbind(x,mat[k,]))))
-    total <- specnumber(total)[-k]
+    #total <- t(apply(mat,1,function(x) colSums(rbind(x,mat[k,]))))
+    #total <- specnumber(total)[-k]
     pair_dist <- as.matrix(dis_matrix)[-k,k]
 
     pair_df <- data.frame(pair_dist,env_data[-k,])
