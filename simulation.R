@@ -11,7 +11,7 @@ library(betaC)
 library(rstatix)
 library(ggplot2)
 
-source("site_dist_testing.R")
+source("site_dist.R")
 
 set.seed(1000)
 
@@ -75,12 +75,7 @@ for (j in 1:nrow(sample_pattern)) {
     sub_mat <- mat[sub_mat_seq,]
     
     avg_dis_matrix <- as.matrix(vegdist(sub_mat,dissim))
-    #C <- C_target(sub_mat,factor=1)
-    #beta_pairwise_subset<- beta_stand(sub_mat, func = list( "beta_C"), setsize=2,args = list(C=C),summarise=F)
-    #avg_dis_matrix <- matrix(NA,sum(sample_pattern[j,]),sum(sample_pattern[j,]))
-    #avg_dis_matrix[lower.tri(avg_dis_matrix,diag=F)] <- beta_pairwise_subset
-    #avg_dis_matrix[upper.tri(avg_dis_matrix,diag=F)] <- t(avg_dis_matrix)[upper.tri(avg_dis_matrix,diag=F)]
-    
+
     diag(avg_dis_matrix) <- NA
     avg_dis <- apply(avg_dis_matrix,2,function(x) mean(x,na.rm=T))
     
@@ -213,19 +208,6 @@ metric_labs <- as_labeller(c(Observed="U[observed]",
                              LCBD = "LCBD",
                              CD = "Distance to centroid",default = label_parsed))
 
-p5_ef_SI <- ggplot(long_result_observed)+
-  geom_violin(aes(y=coef,x=Effort,fill=Metric))+
-  geom_hline(data=long_result_ref,aes(yintercept=coef,group=Metric),linetype=2)+
-  ylab("Expected uniqueness difference (A-B)")+
-  xlab("Sampling effort (A,B)")+
-  scale_fill_discrete(labels=c(expression(U[niche]),"LCBD","Distance to centroid"))+
-  facet_wrap(~Metric,scale="free",ncol=3,labeller= labeller(Metric=metric_labs))+
-  theme_classic()+
-  theme(legend.position="none")
-
-plot(p5_ef_SI)
-
-ggsave("p_factor_SI.tiff",dpi=800,width=16,height=8,compression="lzw",units="cm")
 
 t.test(result_df$coef_observed[result_df$sample_pattern == "(20,20)"]-coefficients(m_observed_ad_full)[[2]])
 t.test(result_df$coef_niche[result_df$sample_pattern == "(20,20)"]-coefficients(m_observed_ad_full)[[2]])
