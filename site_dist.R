@@ -73,8 +73,6 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   
   for (k in 1:nrow(dis_matrix)){
     message(k,"/",nrow(dis_matrix))
-    #total <- t(apply(mat,1,function(x) colSums(rbind(x,mat[k,]))))
-    #total <- specnumber(total)[-k]
     pair_dist <- as.matrix(dis_matrix)[-k,k]
 
     pair_df <- data.frame(pair_dist,env_data[-k,])
