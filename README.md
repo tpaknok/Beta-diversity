@@ -41,9 +41,9 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 # Notes
 
 If factors are ordered, the function will convert them into numeric variables before the regression. The order will follow how the factors were ordered originally.
-For both ordinal and nominal variables, in the formula simply set pair_dist~Factor1+Factor2+Factor3....etc. Note that no splines were added for all factors. 
+For both ordinal and nominal variables, in the formula simply set pair_dist~Factor1+Factor2+Factor3....etc. Note that no splines can be added for all factors. 
 
-You can also add continuous variable (e.g. pair_dist~Factor1 + s(Cont.var, k=3).
+You can also add continuous variable (e.g. pair_dist~Factor1 + s(Cont.var, k=3)).
 
 The users are recommended to read the documentation of gam and gamm in mgcv.
 
