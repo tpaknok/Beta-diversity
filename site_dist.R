@@ -80,7 +80,7 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
     env_name <- colnames(pair_df)[-1]
     num_seq <- which(sapply(pair_df,is.numeric))[-1] - 1
     
-    if (!is.null(random) & !is.null(correlation) & is.null(w)) {
+    if (is.null(random) & is.null(correlation) & is.null(w)) {
       dis_controlled_m <- gam(formula=formula,data=pair_df,family=family,...)
       } 
     

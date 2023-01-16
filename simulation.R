@@ -188,7 +188,7 @@ p5_ef<- ggplot(long_result)+
   ylab("Uniqueness differences across habitats (A-B)")+
   xlab("Sampling effort (A,B)")+
   facet_wrap(~Metric,labeller= labeller(Metric=metric_labs))+
-  scale_fill_discrete(labels=c(expression(U[observed]),expression(U[niche])))+
+  scale_fill_discrete(values=c("blue","red"),labels=c(expression(U[observed]),expression(U[niche])))+
   theme_classic()+
   theme(legend.position="bottom")
 
