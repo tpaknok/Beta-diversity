@@ -67,8 +67,15 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   env_space <- expand.grid(env_list)
   message("finish creating environmental space")
   
-  if (length(which(sapply(env_data,is.ordered) == T)) > 0) {
-  env_data[,sapply(env,is.ordered)] <- sapply(as.data.frame(env_data[,sapply(env,is.ordered)]),as.numeric)
+  if (length(which(sapply(env_data,is.ordered) == T)) > 1) {
+    message("Detected more than one ordinal factor")
+    env_data[,sapply(env_data,is.ordered)] <- sapply(as.data.frame(env_data[,sapply(env_data,is.ordered)]),as.numeric)
+  }
+  
+  
+  if (length(which(sapply(env_data,is.ordered) == T)) == 1) {
+    message("Detected one ordinal factor")
+    env_data[,sapply(env_data,is.ordered)] <- as.vector(sapply(as.data.frame(env_data[,sapply(env_data,is.ordered)]),as.numeric))
   }
   
   for (k in 1:nrow(dis_matrix)){
