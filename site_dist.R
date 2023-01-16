@@ -1,10 +1,10 @@
 site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
-                      mat,env_data,dissim="jaccard",C=0.5,dissim_mat = NULL,dissim_env,ref,
+                      mat,env_data,dissim="jaccard",C=0.5,dissim_mat = NULL,dissim_env,
                       env_space = NULL,
                       family="gaussian",
-                      splines=3,
-                      weight=NULL,
-                      length.cont=25,...) {
+                      weights=NULL,
+                      length.cont=25,
+                      ...) {
   require(BAT)
   require(vegan)
   require(mgcv)
@@ -27,13 +27,12 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   if (!is.null(dissim_mat)){
     dis_matrix <- dissim_mat
   }
-
-  if (is.null(weight)) {
-    w <- rep(1,nrow(dis_matrix))
-  } else {
-    w <- weight
-  }
   
+  if (is.null(weights)) {
+    w = NULL
+  } else {
+    w = weights
+  }
   
   library(stringr)
   
@@ -80,16 +79,25 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
     
     env_name <- colnames(pair_df)[-1]
     num_seq <- which(sapply(pair_df,is.numeric))[-1] - 1
-      
-
-      if (is.null(random) & is.null(correlation)) {
-        dis_controlled_m <- gam(formula=formula,data=pair_df,family=family)
-        } else {
-        dis_controlled_m <- gamm(formula=formula,random=random,correlation=correlation,data=pair_df,family=family,...)
-        }
-      message("finished modelling")
-      
-
+    
+    if (!is.null(random) & !is.null(correlation) & is.null(w)) {
+      dis_controlled_m <- gam(formula=formula,data=pair_df,family=family,...)
+      } 
+    
+    if (is.null(random) & is.null(correlation) & !is.null(w)) {
+      pair_df$w_site <- w[-k]
+      dis_controlled_m <- gam(formula=formula,data=pair_df,family=family,weights=w_site,...)
+      } 
+    
+    if (!(is.null(random) & is.null(correlation)) & is.null(w)) {
+      dis_controlled_m <- gamm(formula=formula,data=pair_df,family=family,...)
+    } 
+    
+    if (!(is.null(random) & is.null(correlation)) & !is.null(w)) {
+      pair_df$w_site <- w[-k]
+      dis_controlled_m <- gamm(formula=formula,data=pair_df,family=family,weights=w_site,...)
+      } 
+    
     predict_net<- env_space
     colnames(predict_net) <- colnames(env)
     

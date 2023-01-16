@@ -9,7 +9,7 @@ predict_pb <- site_dist(pair_dist ~ s(elevation,k=3) + s(convex,k=3) + s(slope,k
                         spatial_var = c("UTM.EW","UTM.NS"),
                         correlation=corExp(1,form=~UTM.EW+UTM.NS,nugget=T),
                         mat=BCI,env_data=BCI.env,
-                        length.cont=10,control=lmeControl(opt = 'optim',maxIter = 1e8, msMaxIter = 1e8))
+                        length.cont=25,control=lmeControl(opt = 'optim',maxIter = 1e8, msMaxIter = 1e8))
 
 End <- Sys.time()
 End-Start
