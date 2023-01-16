@@ -24,7 +24,7 @@ site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 |Argument|Description|
 |---|---|
 |formula| A GAM/GAMM formula. Note that the LHS must start with pair_dist (see Example). Syntax as in mgcv.|
-|random| Optional; A random effect structure, as in mgcv.Default is NULL.|
+|random| Optional; A random effect structure, as in mgcv. Default is NULL.|
 |correlation| Optional; A correlation structure, as in mgcv. Default is NULL.|
 |spatial_var| Optional; Name of the spatial variable, specificed as a vector (e.g. c("Long","Lat"). Default is NULL.|
 |mat| A community data (species as column, site as row) as a data frame. Ignored if dissimilarity matrix is provided in dissim_mat.|
