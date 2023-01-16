@@ -1,8 +1,8 @@
-# Environmental availablity and uniqueness 
+# Environmental availablity and uniqueness (Latest version - 2023-01-16)
 
 This repository contains all codes required to reproduce results from the paper Tsang et al. (XXXXX)
 
-The site_dist.R function is likely to evolve based on users' feedback, and the latest version can be found in a separate file (Last updated - 2023-01-16)
+The site_dist.R function is likely to evolve based on users' feedback, and the latest version can be found in a separate file
 
 # Description 
 
