@@ -109,6 +109,7 @@ plot(density_p)
 label_df <- data.frame(env=unique(sort(analysis_BCI_long$name)),label=c("(d)","(e)","(f)"))
 
 library(ggplot2)
+library(ggpubfigs)
 empirical_p <- ggplot(overall_pre,aes(x=x,y=predicted))+
   geom_point(data=Overall_long_df,aes(x=value,y=avg_dis,colour=Model),alpha=0.5)+
   geom_line(aes(linetype=Significance,colour=Model),size=1.2)+
@@ -118,8 +119,8 @@ empirical_p <- ggplot(overall_pre,aes(x=x,y=predicted))+
   ylab("Uniqueness")+
   xlab("Environmental conditions")+
   scale_linetype_manual(values=c("dashed", "solid"))+
-  scale_colour_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[observed])))+
-  scale_fill_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[observed])))+
+  scale_colour_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[obs])))+
+  scale_fill_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[obs])))+
   scale_x_continuous(n.breaks=4)+
   theme_classic()+
   theme(legend.position="bottom")+

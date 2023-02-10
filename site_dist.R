@@ -5,6 +5,26 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
                       weights=NULL,
                       length.cont=25,
                       ...) {
+  
+convert_env_df <- function(env,length.cont=length.cont) {
+    if (is.numeric(env)) {
+      numeric_env <- env
+      max_num_env <- max(numeric_env)
+      min_num_env <- min(numeric_env)
+      range_env <- rbind(min_num_env,max_num_env)
+      
+      env_list<- apply(range_env,2,function (x) seq(x[[1]],range_env[[2]],length.out=length.cont))
+    } else {
+      env_factor <- env
+      env_list <- unique(env_factor)
+      
+      if (is.ordered(env_list)) {
+        env_list <- as.numeric(env_list)
+      }
+    }
+    return(env_list)
+  }
+  
   require(BAT)
   require(vegan)
   require(mgcv)
@@ -44,24 +64,7 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
   env <- as.data.frame(env[,seq_env])
   colnames(env) <- colnames(env_data)[seq_env]
   
-  env_list <- list()
-  for (env_var in colnames(env)) {
-    if (is.numeric(env[,env_var])) {
-      numeric_env <- env[,env_var]
-      max_num_env <- max(numeric_env)
-      min_num_env <- min(numeric_env)
-      range_env <- rbind(min_num_env,max_num_env)
-  
-      env_list[[env_var]]<- apply(range_env,2,function (x) seq(x[[1]],range_env[[2]],length.out=length.cont))
-    } else {
-        env_factor <- env[,env_var]
-        env_list[[env_var]] <- unique(env_factor)
-        
-        if (is.ordered(env_list[[env_var]])) {
-          env_list[[env_var]] <- as.numeric(env_list[[env_var]])
-        }
-      }
-    }
+  env_list <- lapply(env,function(x) convert_env_df(x,length.cont=length.cont))
   
   env_space <- expand.grid(env_list)
   message("finish creating environmental space")
@@ -118,9 +121,6 @@ site_dist <- function(formula,random=NULL,correlation=NULL,spatial_var = NULL,
 
         avg_dis[[k]] <- data.frame(total_env,c(env[k,]),k)
     colnames(avg_dis[[k]]) <- c("avg_dis",colnames(env),"Site")
-    if (ncol(env) == 1) {
-      colnames(avg_dis)[[2]] <- colnames(env_var)
-    }
   }
   result_df <- do.call(rbind,avg_dis)
   result_df <- cbind(result_df,env_data[,spatial_var])

@@ -55,7 +55,7 @@ m_observed_CD_full <- lm(CD_full~env_data)
 summary(m_observed_CD_full)
 predict_observed_CD_full <- unique(predict(m_observed_CD_full,type="response"))
 
-env_data <- data.frame(env_data=env_data)
+env_data <- data.frame(env_data)
 reg_df_full <- site_dist(formula=pair_dist~env_data,mat=mat,env_data=env_data)
 
 m_niche_full <- lm(avg_dis~env_data,data=reg_df_full)
@@ -141,7 +141,7 @@ unbalanced_niche <- subset(unbalanced_niche,var1 == "uniche")
 
 cor_metric_labs <- as_labeller(c(CD = "Distance~to~centroid",
                                  LCBD = "LCBD",
-                                 uobserved = "U[observed]"),
+                                 uobserved = "U[obs]"),
                                default = label_parsed)
 
 cor_p <- ggplot(data=unbalanced_niche)+
@@ -177,7 +177,7 @@ hline_result <- subset(hline_result, Metric == "Uobserved" | Metric == "Uniche")
 hline_result$Metric <- droplevels(as.factor(hline_result$Metric))
 hline_result$label <- c("(a)","(b)")
 
-metric_labs <- as_labeller(c(Uobserved = "U[observed]",
+metric_labs <- as_labeller(c(Uobserved = "U[obs]",
                              Uniche = "U[niche]"),
                            default = label_parsed)
 
@@ -188,7 +188,7 @@ p5_ef<- ggplot(long_result)+
   ylab("Uniqueness differences across habitats (A-B)")+
   xlab("Sampling effort (A,B)")+
   facet_wrap(~Metric,labeller= labeller(Metric=metric_labs))+
-  scale_fill_discrete(values=c("blue","red"),labels=c(expression(U[observed]),expression(U[niche])))+
+  scale_fill_manual(values=c("blue","red"),labels=c(expression(U[obs]),expression(U[niche])))+
   theme_classic()+
   theme(legend.position="bottom")
 
