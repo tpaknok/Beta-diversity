@@ -5,6 +5,15 @@ This repository contains all codes required to reproduce results in Tsang et al.
 
 The site_dist.R function is likely to evolve based on users' feedback. Both the latest and old version will be kept here
 
+# Installation
+
+The easiest way is to use devtools and the function source_url. Alternatively, you can simply download the script and load it in R using source.
+
+```
+library(devtools)
+source_url("https://raw.githubusercontent.com/tpaknok/Beta-diversity/main/site_dist.R")
+```
+
 # Description 
 
 site_dist.R calculates compositional uniqueness within a niche space using Generalized Additive Model or Generalized Additive Mixed Model
