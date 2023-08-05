@@ -18,6 +18,7 @@ source_url("https://raw.githubusercontent.com/tpaknok/Beta-diversity/main/site_d
 
 site_dist.R calculates compositional uniqueness within a niche space using Generalized Additive Model or Generalized Additive Mixed Model
 
+empircal_tree.R and simulation.R are the scripts to reproduce results described in Tsang et al. (2023, Methods in Ecology & Evolution)
 ```
 site_dist(formula,random=NULL,correlation=NULL,spatial_var = NULL,
           mat,env_data,dissim="jaccard",C=0.5,
