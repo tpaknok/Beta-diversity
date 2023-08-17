@@ -3,9 +3,14 @@
 
 This repository contains all codes required to reproduce results in Tsang et al. (2024)
 
+Cont.R - Results based on a simulated continuous variable - as described in Supplementary Text S1
+empirical_tree.R - Empirical analyses using BCI data - as described in the main text
+simulation.R - Results based on a simulated categorical variable - as described in the main text 
+site_dist.R - Function to correct ecological uniqueness under uneven environmental availability
+
 The site_dist.R function is likely to evolve based on users' feedback. Both the latest and old version will be kept here
 
-# Installation
+# Installing site_dist.R
 
 The easiest way is to use devtools and the function source_url. Alternatively, you can simply download the script and load it in R using source.
 
