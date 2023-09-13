@@ -131,5 +131,5 @@ library(ggpubr)
 p <- ggarrange(density_p,empirical_p,ncol=2,common.legend=T,legend="bottom")
 plot(p)
 
-ggsave("empirical_revised.tiff",width=7,height=7,dpi=800,compression="lzw")
+ggsave("empirical_revised.tiff",width=7,height=7,dpi=800,compression="lzw", bg="white")
 
