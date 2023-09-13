@@ -1,4 +1,4 @@
-###
+### for factor simulation
 library(betapart)
 library(adespatial)
 library(vegan)

@@ -1,3 +1,4 @@
+### For continuous variable simulation
 library(truncnorm)
 library(dplyr)
 library(tidyverse)

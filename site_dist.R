@@ -81,7 +81,7 @@ convert_env_df <- function(env,length.cont=length.cont) {
   }
   
   for (k in 1:nrow(dis_matrix)){ #generate Uniche of each site
-    message(k,"/",nrow(dis_matrix))
+    message(k,"/",nrow(dis_matrix)) 
     pair_dist <- as.matrix(dis_matrix)[-k,k]
 
     pair_df <- data.frame(pair_dist,env_data[-k,])
@@ -117,12 +117,12 @@ convert_env_df <- function(env,length.cont=length.cont) {
       net_env <- c(predict(dis_controlled_m$gam,newdata=predict_net,type="response"))
     }
     
-    net_env[net_env > 1] <- 1 #cap Uniche between 0-1
+    net_env[net_env > 1] <- 1 #cap projected dissimilarity between 0-1
     net_env[net_env < 0] <- 0
     
-    total_env <- sum(net_env)/length(net_env)
+    total_env <- sum(net_env)/length(net_env) #average projected dissimilarity across the environmental space, thus obtain Uniche
 
-        avg_dis[[k]] <- data.frame(total_env,c(env[k,]),k)
+    avg_dis[[k]] <- data.frame(total_env,c(env[k,]),k)
     colnames(avg_dis[[k]]) <- c("avg_dis",colnames(env),"Site")
   }
   result_df <- do.call(rbind,avg_dis)

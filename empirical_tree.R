@@ -1,3 +1,4 @@
+### For empirical analyses
 library(BiodiversityR)
 library(vegan)
 source("site_dist.R")
@@ -16,7 +17,6 @@ End-Start
 
 m_niche <- gls(avg_dis~elevation+convex+slope,correlation=corExp(1,form=~UTM.EW+UTM.NS,nugget=T),data=predict_pb)
 summary(m_niche)
-#vif(m_niche)
 
 library(ggeffects)
 ele_niche <- ggemmeans(m_niche,"elevation")
