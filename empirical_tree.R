@@ -119,8 +119,8 @@ empirical_p <- ggplot(overall_pre,aes(x=x,y=predicted))+
   ylab("Uniqueness")+
   xlab("Environmental conditions")+
   scale_linetype_manual(values=c("dashed", "solid"))+
-  scale_colour_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[obs])))+
-  scale_fill_manual(values=c("red","blue"),labels=c(expression(U[niche]),expression(U[obs])))+
+  scale_colour_manual(values=c("#E69F00","#0072B2"),labels=c(expression(U[niche]),expression(U[obs])))+
+  scale_fill_manual(values=c("#E69F00","#0072B2"),labels=c(expression(U[niche]),expression(U[obs])))+
   scale_x_continuous(n.breaks=4)+
   theme_classic()+
   theme(legend.position="bottom")+

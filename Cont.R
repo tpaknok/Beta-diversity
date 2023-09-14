@@ -130,7 +130,7 @@ result_df <- predict_df <- NULL
     geom_line(data=average_set,aes(y=predicted_uniqueness,x=Cond,colour=Metric))+
     ylab("Uniqueness")+
     xlab("Environmental gradient")+
-    scale_color_manual(values=c("red","blue"))+
+    scale_color_manual(values=c("#E69F00","#0072B2"))+
     facet_wrap(Distribution~Metric,ncol=2,scales="fixed",labeller= labeller(Metric=metric_labs,Distribution=Distribution_labs))+
     theme_classic()+
     theme(legend.position="none")
