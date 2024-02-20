@@ -1,7 +1,9 @@
 # Environmental availablity and uniqueness
 # (Latest version - 2023-08-17)
 
-This repository contains all codes required to reproduce results in Tsang et al. (2024)
+This repository contains all codes required to reproduce results in [Tsang et al. (2023)](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.14211)
+
+Tsang, T. P., Bonebrake, T. C., Ponisio, L. C., & Cadotte, M. W. (2023). Controlling for the effects of environmental availability when testing how the environment determines community compositional uniqueness. Methods in Ecology and Evolution, 14(12), 3112-3122.
 
 |File|Description|
 |---|---|
