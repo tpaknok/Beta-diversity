@@ -1,5 +1,5 @@
 # Environmental availablity and uniqueness
-# (Latest version - 2023-08-17)
+# (Latest version - 2024-02-20)
 
 This repository contains all codes required to reproduce results in [Tsang et al. (2023)](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.14211)
 
